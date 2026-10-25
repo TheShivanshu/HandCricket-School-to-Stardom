@@ -1,0 +1,16 @@
+{
+  "name": "handcricket-school-to-stardom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HandCricket: School to Stardom (Android app)",
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/core": "^6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "@fontsource/patrick-hand": "^5.0.0",
+    "@fontsource/permanent-marker": "^5.0.0"
+  }
+}

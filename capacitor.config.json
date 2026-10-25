@@ -1,0 +1,7 @@
+{
+  "appId": "com.handcricket.schooltostardom",
+  "appName": "HandCricket",
+  "webDir": "www",
+  "backgroundColor": "#241309",
+  "server": { "androidScheme": "https" }
+}
