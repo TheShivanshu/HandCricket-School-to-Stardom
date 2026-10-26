@@ -3385,43 +3385,7 @@ function startL2Match(type){
   var key = type === 'trial' ? 'trial' : type === 'final' ? save2.finalOpp : (function(){ var f = SCHEDULE[save2.round].filter(function(pr){ return pr.indexOf('A') >= 0; })[0]; return f[0] === 'A' ? f[1] : f[0]; })();
   var mine = type === 'trial' ? buildTrialHumanTeam() : buildHumanTeam(save2.status === 'sub' ? 'sub' : save2.role);
   var opp = type === 'trial' ? trialRedTeam() : sectionTeam(key);
-  Object.assign(LEVEL, { id:2, name:'Inter-Section Championship', opp:oppNames(key), records:true });
-  var first = Math.random() < 0.5 ? 0 : 1;
-  var tm = newTeamMatch(mine, opp, first);
-  $('#simWatch').checked = !!save2.watch;
-  TMX = { tm:tm, type:type, key:key, picking:null, skip:false, paused:false, watch:!!save2.watch, log:{}, feed:[], matchWk:0, venue:venueForL2(type, key) };
-  LASTTM = tm;
-  document.body.classList.add('team');
-  var me = tm.teams[0].humanIdx != null ? 0 : 1, T = tm.teams[me];
-  var role = type === 'trial' ? 'Trial: you bat 3rd and bowl the 3rd over.' : 'You bat ' + (T.order.indexOf(4) + 1) + (T.order.indexOf(4) === 0 ? 'st' : T.order.indexOf(4) === 1 ? 'nd' : T.order.indexOf(4) === 2 ? 'rd' : 'th') + ' and bowl over ' + (T.bowl.indexOf(4) + 1) + '.';
-  veil('<h2>' + T.name + ' v ' + tm.teams[1 - me].name + '</h2><p class="venue-line"><b>' + venueLine(TMX.venue) + '.</b></p><p>5 overs each, five a side. Every batter has one life and every player bowls one over.</p><p>' + tm.teams[first].name + ' bat first. ' + role + '</p><div class="btn-row"><button class="btn" data-act="veil">Play</button></div>', function(){ runTeamMatch(); });
-}
-
-/* ---- the match loop ---- */
-function gate(){ return new Promise(function(res){ (function chk(){ if (!TMX || !TMX.paused) res(); else setTimeout(chk, 120); })(); }); }
-async function runTeamMatch(){
-  var tm = TMX.tm;
-  while (!tm.done){
-    var nx = teamNext(tm), ev;
-    if (nx.human) ev = await humanTeamBall(nx); else ev = await simTeamBall(nx);
-    await gate();
-    if (ev.inningsEnded && !ev.matchEnded){ TMX.skip = false; await inningsBreak(ev); }
-  }
-  await finishTeamMatch();
-}
-function inningsBreak(ev){
-  var tm = TMX.tm, T = tm.teams, last = tm.innRuns[0], batName = T[1 - tm.bat].name;
-  return new Promise(function(res){
-    veil('<h2>Innings over</h2><p>' + batName + ' scored <b>' + last + ' runs</b> and lost ' + tm.innOuts[0] + (tm.innOuts[0] === 1 ? ' wicket' : ' wickets') + '.</p><p>' + T[tm.bat].name + ' now need <b>' + tm.target + ' runs</b> to win.</p><div class="btn-row"><button class="btn" data-act="veil">Continue</button><button class="btn alt" data-act="cardOnly">Scorecard</button></div>', res);
-  });
-}
-function overs(b){ return Math.floor(b / 6) + '.' + (b % 6); }
-function simHeader(){
-  var tm = TMX.tm, T = tm.teams;
-  $('#simScore').textContent = T[tm.bat].name + ': ' + tm.runs + ' runs, ' + tm.outs + (tm.outs === 1 ? ' wicket' : ' wickets') + ' lost';
-  $('#simMeta').textContent = (tm.inn === 2 ? T[tm.bat].name + ' need ' + Math.max(0, tm.target - tm.runs) + ' more runs from ' + (tm.limit - tm.balls) + ' balls' : 'First innings') + ' · ' + overs(tm.balls) + ' of ' + (tm.limit / 6) + ' overs · ' + T[1 - tm.bat].name + ' bowling';
-  $('#simSkip').textContent = humanTurnLeft(tm) ? 'Skip to my turn' : 'Skip to the result';
-  $('#simVenue').textContent = TMX.venue && VENUES[TMX.venue] ? 'At: ' + VENUES[TMX.venue].name : '';
+  function runTeamMatch VENUES[TMX.venue] ? 'At: ' + VENUES[TMX.venue].name : '';
 }
 function feedAdd(txt, cls){
   TMX.feed.push({ t:txt, c:cls || '' }); if (TMX.feed.length > 5) TMX.feed.shift();
@@ -3501,8 +3465,88 @@ function turnBanner(nx){
     function end(){ if (done) return; done = true; el.classList.add('out'); setTimeout(function(){ el.remove(); res(); }, 300); }
     el.addEventListener('click', end);
     sleep(3200).then(end);
+js
+// ===== HANDCRICKET REWARDED REVIVE =====
+var REVIVE_TEST_AD_ID = 'ca-app-pub-3940256099942544/5224354917';
+
+async function showReviveRewardedAd() {
+  var cap = window.Capacitor;
+  var admob = cap && cap.Plugins && cap.Plugins.AdMob;
+
+  if (!admob) {
+    console.warn('AdMob is only available in the native APK.');
+    return false;
+  }
+
+  try {
+    if (!window.handCricketAdMobReady) {
+      window.handCricketAdMobReady = admob.initialize();
+    }
+
+    await window.handCricketAdMobReady;
+
+    await admob.prepareRewardVideoAd({
+      adId: REVIVE_TEST_AD_ID,
+      isTesting: true
+    });
+
+    var reward = await admob.showRewardVideoAd();
+    return !!(reward && reward.amount > 0);
+  } catch (err) {
+    console.error('Rewarded revive ad failed:', err);
+    return false;
+  }
+}
+
+function askForRevive() {
+  return new Promise(function(resolve) {
+    veil(
+      '<h2>One More Chance!</h2>' +
+      '<p>You got out, but you can replay this delivery by watching a rewarded ad.</p>' +
+      '<p class="small">You can use one successful revive per match.</p>' +
+      '<div class="btn-row">' +
+        '<button class="btn" id="reviveWatch">Watch Ad to Revive</button>' +
+        '<button class="btn alt" id="reviveSkip">Continue Without Revive</button>' +
+      '</div>' +
+      '<p id="reviveStatus" class="small"></p>'
+    );
+
+    var watch = document.getElementById('reviveWatch');
+    var skip = document.getElementById('reviveSkip');
+    var status = document.getElementById('reviveStatus');
+    var answered = false;
+
+    function finish(value) {
+      if (answered) return;
+      answered = true;
+      closeVeil();
+      resolve(value);
+    }
+
+    skip.onclick = function() {
+      finish(false);
+    };
+
+    watch.onclick = async function() {
+      watch.disabled = true;
+      skip.disabled = true;
+      status.textContent = 'Loading rewarded ad…';
+
+      var earned = await showReviveRewardedAd();
+
+      if (earned) {
+        finish(true);
+      } else {
+        status.textContent =
+          'No reward was earned or the ad was unavailable. Continuing without revive.';
+        setTimeout(function() {
+          finish(false);
+        }, 1200);
+      }
+    };
   });
 }
+  
 async function humanTeamBall(nx){
   var tm = TMX.tm, T = tm.teams; TMX.skip = false;
   var op = nx.humanBat ? T[nx.ft].players[nx.bowler] : T[nx.bt].players[nx.batter];
@@ -3532,9 +3576,20 @@ async function humanTeamBall(nx){
     play(thump, 0); arena.classList.remove('thump'); void arena.getBoundingClientRect(); arena.classList.add('thump');
     await sleep(40);
   }
-  var bn = nx.humanBat ? n : aNum, wn = nx.humanBat ? aNum : n;
-  var ev = teamBall(tm, nx, bn, wn);
-  log.push({ n:aNum, role:aiRole, out:ev.out });
+js
+var bn = nx.humanBat ? n : aNum;
+var wn = nx.humanBat ? aNum : n;
+
+// Save the match state before the delivery.
+var reviveSnapshot =
+  (nx.humanBat && !TMX.reviveUsed)
+    ? JSON.parse(JSON.stringify(tm))
+    : null;
+
+var logLengthBefore = log.length;
+var ev = teamBall(tm, nx, bn, wn);
+log.push({ n:aNum, role:aiRole, out:ev.out });
+
   if (ev.humanBowl && ev.out) recordWicket();
   setHand('#mHand', handG(aNum, 'm'), 'pop .3s cubic-bezier(.2,1.6,.4,1)'); setHand('#pHand', handG(n, 'p'), 'pop .3s cubic-bezier(.2,1.6,.4,1)');
   $('#mNum').textContent = aNum; $('#pNum').textContent = n;
@@ -3551,9 +3606,35 @@ async function humanTeamBall(nx){
   renderChips();
   var celebrated = false;
   if (ev.humanBat && ev.milestone){ recordMilestone(ev.milestone, ev.batterRuns); await sleep(550); await celebrate(ev.milestone); celebrated = true; }
+ js
   await sleep(celebrated ? 250 : (ev.inningsEnded ? 1300 : 950));
+
+  if (ev.out && nx.humanBat && reviveSnapshot && !TMX.reviveUsed) {
+    var reviveAccepted = await askForRevive();
+
+    if (reviveAccepted) {
+      Object.keys(tm).forEach(function(key) {
+        delete tm[key];
+      });
+      Object.assign(tm, reviveSnapshot);
+
+      log.length = logLengthBefore;
+      mohitLog = log;
+      TMX.reviveUsed = true;
+
+      renderChips();
+
+      return {
+        revived: true,
+        inningsEnded: false,
+        matchEnded: false
+      };
+    }
+  }
+
   return ev;
 }
+
 function recordWicket(){
   if (!LEVEL.records) return;
   stats.wk = stats.wk || { total:0, best:null }; stats.wk.total++; TMX.matchWk++; persistStats();
