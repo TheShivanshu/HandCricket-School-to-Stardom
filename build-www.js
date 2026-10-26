@@ -1,4 +1,5 @@
 // Builds www/index.html from src/game.html:
+// (reads src/game-app.html if present, else src/game.html)
 //  - swaps the online Google Fonts link for fonts embedded in the file (so the app works offline)
 //  - wraps the game in a full HTML document
 //  - adds the Android back-button handling
@@ -13,9 +14,11 @@ function fontFace(family, pkg) {
   return "@font-face{font-family:'" + family + "';font-style:normal;font-weight:400;font-display:swap;src:url(data:font/woff2;base64," + b64 + ") format('woff2')}";
 }
 
-let html = fs.readFileSync('src/game.html', 'utf8');
+// Uses the app version if it is there, otherwise the normal game file.
+const srcFile = fs.existsSync('src/game-app.html') ? 'src/game-app.html' : 'src/game.html';
+let html = fs.readFileSync(srcFile, 'utf8');
 const link = /<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^>]*>/;
-if (!link.test(html)) throw new Error('Google Fonts link not found in src/game.html');
+if (!link.test(html)) throw new Error('Google Fonts link not found in ' + srcFile);
 html = html.replace(link, '<style>' + fontFace('Patrick Hand', 'patrick-hand') + fontFace('Permanent Marker', 'permanent-marker') + '</style>');
 
 const backButton = `
